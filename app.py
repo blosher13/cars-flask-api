@@ -1,10 +1,38 @@
 from flask import Flask, request
 import uuid
 from flask_smorest import abort
+from dotenv import load_dotenv
+import os
+from flask_sqlalchemy import SQLAlchemy
+from urllib.parse import quote_plus
+
 
 from db import cars, vehicle_attributes
 
 app = Flask(__name__)
+
+# Load environment variables from .env
+load_dotenv()
+
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = quote_plus(os.getenv("DB_PASSWORD"))
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
+DB_PORT = os.getenv("DB_PORT")
+
+print(DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
+
+# MySQL connection string format:
+# dialect+driver://username:password@host:port/database_name
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+with app.app_context():
+    db.session.execute(db.text("SELECT 1"))
+    print("Connected to MySQL successfully!")
 
 # get a list of all cars
 @app.get('/cars')
