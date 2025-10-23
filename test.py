@@ -1,14 +1,34 @@
-from dotenv import load_dotenv
-import os
-from flask_sqlalchemy import SQLAlchemy
+# test_db.py
+from db import init_db, get_connection
 
-# Load environment variables from .env
-load_dotenv()
+# Step 1: Initialize DB (creates database, tables, and connection pool)
+init_db()
 
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
-DB_PORT = os.getenv("DB_PORT")
+# Step 2: Test an insert & select
+try:
+    conn = get_connection()
+    cursor = conn.cursor()
 
-print(DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
+    # Insert a sample car
+    cursor.execute(
+        "INSERT INTO cars (make, model) VALUES (%s, %s)",
+        ("Toyota", "Highlander")
+    )
+    conn.commit()
+
+    print("✅ Inserted sample data successfully!")
+
+    # Read data back
+    cursor.execute("SELECT * FROM cars")
+    rows = cursor.fetchall()
+
+    print("🚗 Cars in database:")
+    for row in rows:
+        print(row)
+
+except Exception as e:
+    print(f"❌ Error during DB test: {e}")
+
+finally:
+    cursor.close()
+    conn.close()
