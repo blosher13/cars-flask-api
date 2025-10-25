@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify
-import uuid
 from .. db import db_cursor
 
 blp = Blueprint("cars", __name__)
@@ -7,16 +6,21 @@ blp = Blueprint("cars", __name__)
 # get a list of all cars
 @blp.get("/cars")
 def get_all_cars():
-    with db_cursor() as cursor:
-        cursor.execute("SELECT * FROM cars")
-        rows = cursor.fetchall()
-        cursor.close()
-    return jsonify(rows)
+    try:
+        with db_cursor() as cursor:
+            cursor.execute("SELECT * FROM cars")
+            rows = cursor.fetchall()
+            cursor.close()
+        return jsonify(rows)
+    except:
+        return {'message': 'No car records'}
 
 # get a list of a certain make & model using car_id
-@blp.get("/cars/<string:make>/<string:model>")
+@blp.get("/cars")
 def get_a_car(make, model):
     try:
+        make = request.args.get('make')
+        model = request.args.get('model')
         with db_cursor() as cursor:
             cursor.execute(
                 "SELECT * FROM cars WHERE make = %s and model = %s ", (make, model)
@@ -50,7 +54,6 @@ def create_car():
 @blp.delete('/cars')
 def delete_make_model():
     try:
-        # data = request.get_json()
         make = request.args.get('make')
         model = request.args.get('model')
         

@@ -1,7 +1,7 @@
 from flask import Flask
 from .db import init_db
 from .routes.cars import blp as CarsBlueprint
-# from car_attributes import blp as CarAttributeBlueprint
+from .routes.car_attributes import blp as CarAttributeBlueprint
 
 def create_app():
     app = Flask(__name__)
@@ -11,6 +11,6 @@ def create_app():
 
     # Register blueprints
     app.register_blueprint(CarsBlueprint)
-    # app.register_blueprint(CarAttributeBlueprint)
+    app.register_blueprint(CarAttributeBlueprint)
 
     return app

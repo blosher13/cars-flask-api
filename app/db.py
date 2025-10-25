@@ -52,7 +52,8 @@ def create_tables_if_not_exists():
             car_attribute_id INT AUTO_INCREMENT PRIMARY KEY,
             car_id INT,
             year VARCHAR(50) NOT NULL,
-            MSRP_price DECIMAL(10,2) NOT NULL
+            MSRP_price DECIMAL(10,2) NOT NULL,
+            FOREIGN KEY (car_id) REFERENCES cars(car_id) ON DELETE CASCADE
         )
     """
 

@@ -1,60 +1,94 @@
-from flask import Flask, request
-import uuid
-from flask.views import MethodView
-from flask_smorest import Blueprint, abort
+from flask import Blueprint, request, jsonify
+from .. db import db_cursor
 
-blp = Blueprint("car_attributes", __name__, description="Operations on car_attributes")
+blp = Blueprint("car_attributes", __name__)
 
 #get car attributes
-@app.get('/car_attributes')
+@blp.get('/car_attributes')
 def get_car_attributes():
     try:
-        return {'car_attributes': list(car_attributes.values())}
+        with db_cursor() as cursor:
+            cursor.execute('SELECT * FROM car_attributes')
+            rows = cursor.fetchall()
+            cursor.close()
+        return jsonify(rows)
     except:
-        return {'message': 'No car attributes'}
+        return {'message': 'No car attribute records'}
 
 # create car attributes
-@app.post('/car_attributes')
+@blp.post('/car_attributes')
 def create_car_attribute():
-    car_attribute_data = request.get_json()
-    if (
-        "car_id" not in car_attribute_data or 
-        "year" not in car_attribute_data or 
-        "MSRP_price" not in car_attribute_data
-        ):
-        abort(
-            400,
-            message="Bad request. Ensure 'car_id', 'year', and 'MSRP_price' are included in the JSON payload.",
-        )
-    for car_attribute in car_attributes['car_attributes']:
-        if (
-            car_attribute_data['year'] == car_attribute['year']
-            and car_attribute_data['MSRP_price'] == car_attribute['MSRP_price']
-        ):
-            abort(400, message=f"attribute already exists.")
+    data = request.get_json()
+    car_id = data.get('car_id')
+    year = data.get('year')
+    MSRP_price = data.get('MSRP_price')
 
-    car_attribute_id = uuid.uuid4().hex
-    car_attribute = {**car_attribute_data, 'car_attribute_id': car_attribute_id}
-    car_attributes[car_attribute_id] = car_attribute
-    return car_attribute
+    # check to ensure all data is provided in json request
+    if not all([car_id, year, MSRP_price]):
+        return {"error": "Missing fields"}, 400
+    
+    with db_cursor() as cursor:
+
+        # check to ensure data is not duplciated
+        cursor.execute(
+                "SELECT * FROM car_attributes WHERE car_id = %s and year = %s and MSRP_price = %s ", (car_id, year, MSRP_price)
+                )
+        rows = cursor.fetchone()
+        if rows:
+            return {"error": "You cannot insert duplciate records"}, 400
+        cursor.execute(
+            "INSERT INTO car_attributes (car_id, year, MSRP_price) VALUES (%s, %s, %s)",
+            (car_id, year, MSRP_price)
+        )
+        cursor.close()
+    return {"message": "Car attribute added successfully"}, 201
 
 # update car attribute
-@app.put('/car_attributes/<string:car_attribute_id>')
-def update_car_attribute(car_attribute_id):
-    car_attribute_data = request.get_json()
-    if (
-        "car_id" not in car_attribute_data or 
-        "year" not in car_attribute_data or 
-        "MSRP_price" not in car_attribute_data
-        ):
-        abort(
-            400,
-            message="Bad request. Ensure 'car_id', 'year', and 'MSRP_price' are included in the JSON payload.",
-        )
+@blp.put('/car_attributes')
+def update_car_attribute():
     try:
-        for va in car_attributes["car_attributes"]:
-            if va['car_attribute_id'] == car_attribute_id:
-                va.update(car_attribute_data)
-            return va
+        data = request.get_json()
+        car_id = data.get('car_id')
+        year = data.get('year')
+        MSRP_price = data.get('MSRP_price')
+
+        with db_cursor() as cursor:
+            # check to ensure data is not duplciated
+            cursor.execute(
+                    "SELECT * FROM car_attributes WHERE car_id = %s and year = %s and MSRP_price = %s ", (car_id, year, MSRP_price)
+                    )
+            rows = cursor.fetchone()
+            if rows:
+                return {"error": "You cannot insert duplciate records"}, 400
+
+            cursor.execute(
+                '''
+                    UPDATE car_attributes
+                    SET year = %s, MSRP_price = %s
+                    WHERE car_id = %s 
+                ''',
+                (year, MSRP_price, car_id)
+            )
     except KeyError:
-        abort(404, message='car attribute not found')
+        {"error": "Cannot update values"}, 400
+
+# delete car attribute
+@blp.delete('/car_attributes')
+def delete_make_model():
+    try:
+        car_id = request.args.get('car_id')
+        year = request.args.get('year')
+        MSRP_price = request.args.get('MSRP_price')
+        
+        if not all([car_id, year, MSRP_price]):
+            return {"error": "Missing fields"}, 400
+        
+        with db_cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM cars WHERE car_id = %s and year = %s and MSRP_price = %s",
+                (car_id, year, MSRP_price)
+            )
+            cursor.close()
+        return {"message": "Car attribute removed successfully"}, 201
+    except KeyError:
+        return {'message': 'Car attribute not removed'}, 404
