@@ -1,4 +1,3 @@
-from db import car_attributes
 from flask import Flask, request
 import uuid
 from flask.views import MethodView

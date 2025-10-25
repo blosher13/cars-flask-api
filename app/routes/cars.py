@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 import uuid
-from db import db_cursor
+from .. db import db_cursor
 
 blp = Blueprint("cars", __name__)
 
