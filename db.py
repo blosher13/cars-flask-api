@@ -1,62 +1,3 @@
-"""
-db.py
----
-
-Later on, this file will be replaced by SQLAlchemy. For now, it mimics a database.
-Our data storage is:
-    - stores have a unique ID and a name
-    - items have a unique ID, a name, a price, and a store ID.
-cars ={
-    1:{
-        'make':'Toyota',
-        'model':'Land Cruiser',
-        'car_attributes':[
-            {
-            'year': 2024,
-            'MSRP_price': 69877
-            }
-        ]
-    },
-    2: {
-        'make':'Chevy',
-        'model':'Suburban',
-        'car_attributes':[
-            {
-            'year': 2024,
-            'MSRP_price': 89877
-            }
-        ]
-    }
-    }
-    """
-
-# cars ={
-#     "f840f9bc485a441c889781fba00bb84e": {
-#         "car_id": "f840f9bc485a441c889781fba00bb84e",
-#         "make": "Toyota",
-#         "model": "Corolla"
-#     },
-#     "fa21f7befa254691b606a48b2beb4272": {
-#         "car_id": "fa21f7befa254691b606a48b2beb4272",
-#         "make": "Toyota",
-#         "model": "Camry"
-#     }
-# }
-
-# {
-#     "cars": [
-#         {
-#             "car_id": "522ad1b7789d4080961c79d1a41c4f5f",
-#             "make": "Toyota",
-#             "model": "Corolla"
-#         },
-#         {
-#             "car_id": "e3b40f29836444d986f5da4310ae7d74",
-#             "make": "Toyota",
-#             "model": "Camry"
-#         }
-#     ]
-# }
 import mysql.connector
 from mysql.connector import pooling, errorcode
 from dotenv import load_dotenv
@@ -69,6 +10,8 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 DB_PORT = int(os.getenv("DB_PORT", 3306))
+
+from contextlib import contextmanager
 
 def create_database_if_not_exists():
     """Create the database if it doesn't exist yet."""
@@ -144,3 +87,14 @@ def init_db():
 
 def get_connection():
     return connection_pool.get_connection()
+
+@contextmanager
+def db_cursor():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        yield cursor
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
