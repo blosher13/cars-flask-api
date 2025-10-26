@@ -3,6 +3,5 @@
 
 .ENV
 
-test.py
-
-.csv
+toyota_details.csv
+toyota_make_model.csv
