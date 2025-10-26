@@ -51,8 +51,10 @@ def create_tables_if_not_exists():
         CREATE TABLE IF NOT EXISTS car_attributes (
             car_attribute_id INT AUTO_INCREMENT PRIMARY KEY,
             car_id INT,
-            year VARCHAR(50) NOT NULL,
-            MSRP_price DECIMAL(10,2) NOT NULL,
+            year VARCHAR(50) NULL,
+            trim VARCHAR(50) NULL,
+            MSRP_price DECIMAL(10,2) NULL,
+            as_of_datetime DATETIME NOT NULL,
             FOREIGN KEY (car_id) REFERENCES cars(car_id) ON DELETE CASCADE
         )
     """
