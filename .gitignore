@@ -3,5 +3,4 @@
 
 .ENV
 
-toyota_details.csv
-toyota_make_model.csv
+*.csv
